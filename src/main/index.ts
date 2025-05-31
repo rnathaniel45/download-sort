@@ -2,7 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
-import { addFile, watchFolder } from "./fileHandler";
+import { addFile, watchFolder } from "./fileHandler.ts";
+import "./config.ts";
 
 function createWindow(): void {
     // Create the browser window.

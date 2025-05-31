@@ -29,9 +29,9 @@ async function watchFolder(filePath: string, callback: watchCallback): Promise<w
             for await (const event of watcher)
                 if (event.eventType === "rename" && event.filename)
                     callback(event.filename);
-        })().catch(error => console.log(`Aborting watch (${filePath}): ${(error as Error).message}`)); //CHANGE TO IPC
+        })().catch(error => console.error(`Aborting watch (${filePath}): ${(error as Error).message}`)); //CHANGE TO IPC
     } catch (error) {
-        console.log(`Failed to init watch (${filePath}): ${(error as Error).message}`);
+        console.error(`Failed to init watch (${filePath}): ${(error as Error).message}`);
         return { success: false };
     }
 
