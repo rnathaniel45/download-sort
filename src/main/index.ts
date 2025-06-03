@@ -2,9 +2,12 @@ import { app, shell, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
-import { addFile, watchFolder } from "./fileHandler.ts";
+import { addFile, watchFolder } from "./fileHandler";
 import "./config.ts";
-
+import { moveFile } from "./movefile";
+import { constantFile } from "./fileHandler";
+import { spawn } from "child_process";
+const folders = ["Introduction to Calculus", "Integral Calculus", "Linear Algebra", "Invincible Tv-show", "Intro to C++ Computer Programming Language"];
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -57,6 +60,24 @@ app.whenReady().then(() => {
     createWindow();
     addFile().then(v => watchFolder(v, (name => {
       console.log("File added: %s", name);
+      constantFile(v + "/" + name).then(v => {
+        console.log("File moved: %s", name);
+        const child = spawn("python", ["/Users/colinxu2006/Desktop/AutoMatch/download-sort/src/main/compare.py", v, JSON.stringify(folders)]);
+        child.stdout.on("data", (data) => {
+            console.log(`stdout: ${data}`);
+            const str = data.toString().trim();
+            if(str == "Intro to C++ Computer Programming Language"){
+                console.log("true")
+                moveFile(v, "/Users/colinxu2006/Desktop/Pytorch/");
+            }
+            else if(str == "Linear Algebra"){
+                moveFile(v, "/Users/colinxu2006/Desktop/Linear/");
+            }
+        });
+        child.stderr.on("data", (data) => {
+            console.error(`stderr: ${data}`);
+        });
+      });
     })));
 
     app.on("activate", function () {

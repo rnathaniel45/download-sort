@@ -1,6 +1,6 @@
 import { dialog } from "electron";
 import * as fs from "node:fs/promises";
-
+import path from "node:path";
 async function addFile(): Promise<string> {
     const filePath: string = (
         await dialog.showOpenDialog({
@@ -8,7 +8,7 @@ async function addFile(): Promise<string> {
             properties: ["openDirectory"]
         })
     ).filePaths[0];
-
+    console.log(filePath);
     return filePath;
 }
 
@@ -26,10 +26,16 @@ async function watchFolder(filePath: string, callback: watchCallback): Promise<w
         const watcher = fs.watch(filePath, { signal: abort.signal });
 
         (async () => {
-            for await (const event of watcher)
-                if (event.eventType === "rename" && event.filename)
-                    callback(event.filename);
-        })().catch(error => console.error(`Aborting watch (${filePath}): ${(error as Error).message}`)); //CHANGE TO IPC
+            for await (const event of watcher){
+                if (event.eventType === "rename" && event.filename){
+                    const fullPath = path.join(filePath, event.filename);
+          try {
+            await fs.access(fullPath);
+            callback(event.filename);
+          } catch {
+          }
+                }
+    }})().catch(error => console.error(`Aborting watch (${filePath}): ${(error as Error).message}`)); //CHANGE TO IPC
     } catch (error) {
         console.error(`Failed to init watch (${filePath}): ${(error as Error).message}`);
         return { success: false };
@@ -37,5 +43,21 @@ async function watchFolder(filePath: string, callback: watchCallback): Promise<w
 
     return { success: true, abort };
 }
-
-export { addFile, watchFolder };
+async function constantFile(fileName: string, interval: number = 500, maxTries: number = 10) {
+    let recentsize = -1;
+    for (let i = 0; i < maxTries; i++) {
+        try{
+        const stat = await fs.stat(fileName);
+        if (stat.size === recentsize) {
+            console.log("File is constant");
+            return fileName;
+        }
+        recentsize = stat.size;
+    } catch (error) {
+        console.error(`Failed to get size of ${fileName}: ${(error as Error).message}`);
+    }
+    await new Promise(resolve => setTimeout(resolve, interval));
+}
+throw new Error("Failed to get size of ${fileName}: ${(error as Error).message}");
+}
+export { addFile, watchFolder, constantFile };
