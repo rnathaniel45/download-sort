@@ -16,9 +16,7 @@ const store = new Store.default<GlobalConfig>({
 const folders: GlobalConfig["folders"] = store.get("folders");
 
 for (let i = 0; i < folders.length; ++i) {
-    if (is.dev) {
-        access(folders[i].path).catch(() => { folders.splice(i, 1); });
-    }
+    access(folders[i].path).catch(() => { folders.splice(i, 1); });
 }
 
 function addFolder(path: string, desc: string): void {
@@ -31,7 +29,7 @@ function addFolder(path: string, desc: string): void {
 function removeFolder(path: string): void {
     const indice = folders.findIndex(folder => resolve(folder.path) === resolve(path));
 
-    if (indice !== - 1) {
+    if (indice !== -1) {
         folders.splice(indice, 1);
         store.set("folders", folders);
     }

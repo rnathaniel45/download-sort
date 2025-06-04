@@ -13,11 +13,10 @@ def ocr_image(image_path, folders):
     result = reader.readtext(image_path)
     latex_lines = [entry[1] for entry in result]  # get only the recognized text
     latex_code = " ".join(latex_lines)
-    files = [
-    latex_code
-    ]
-# Embed folder names and files
-    folder_embeddings = model.encode(list(map(lambda f : f.desc, folders)), convert_to_tensor=True, show_progress_bar=False)
+    files = [latex_code]
+
+    # Embed folder names and files
+    folder_embeddings = model.encode(list(map(lambda f : f["desc"], folders)), convert_to_tensor=True, show_progress_bar=False)
     file_embeddings = model.encode(files, convert_to_tensor=True, show_progress_bar=False)
 
     # Compute cosine similarity between each file and all folder embeddings
@@ -26,8 +25,8 @@ def ocr_image(image_path, folders):
     # Assign each file to the folder with highest similarity
     best_match_index = torch.argmax(cosine_scores)
 
-# Get the corresponding folder name
-    best_match_folder = folders[best_match_index].path
+    # Get the corresponding folder name
+    best_match_folder = folders[best_match_index]["path"]
 
     return best_match_folder
 
@@ -63,4 +62,5 @@ def ocr_image(image_path, folders):
 if __name__ == "__main__":
     func = sys.argv[1]
     folders = json.loads(sys.argv[2])
+
     print(ocr_image(func, folders))
