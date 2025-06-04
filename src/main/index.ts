@@ -1,13 +1,14 @@
 import { app, shell, BrowserWindow, ipcMain } from "electron";
-import { join } from "path";
+import { join, basename } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
+import compare from "./compare.py?asset";
 import { addFile, watchFolder } from "./fileHandler";
-import "./config.ts";
 import { moveFile } from "./movefile";
 import { constantFile } from "./fileHandler";
+import folders, { addFolder, removeFolder } from "./store";
 import { spawn } from "child_process";
-const folders = ["Introduction to Calculus", "Integral Calculus", "Linear Algebra", "Invincible Tv-show", "Intro to C++ Computer Programming Language"];
+
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -56,29 +57,31 @@ app.whenReady().then(() => {
 
     // IPC test
     ipcMain.on("ping", () => console.log("pong"));
-
     createWindow();
-    addFile().then(v => watchFolder(v, (name => {
-      console.log("File added: %s", name);
-      constantFile(v + "/" + name).then(v => {
-        console.log("File moved: %s", name);
-        const child = spawn("python", ["/Users/colinxu2006/Desktop/AutoMatch/download-sort/src/main/compare.py", v, JSON.stringify(folders)]);
-        child.stdout.on("data", (data) => {
-            console.log(`stdout: ${data}`);
-            const str = data.toString().trim();
-            if(str == "Intro to C++ Computer Programming Language"){
-                console.log("true")
-                moveFile(v, "/Users/colinxu2006/Desktop/Pytorch/");
-            }
-            else if(str == "Linear Algebra"){
-                moveFile(v, "/Users/colinxu2006/Desktop/Linear/");
-            }
-        });
-        child.stderr.on("data", (data) => {
-            console.error(`stderr: ${data}`);
-        });
-      });
-    })));
+
+    addFile().then(v => addFolder(v, basename(v))).then(() => {
+        console.log("Folders:", folders);
+
+        addFile().then(v => watchFolder(v, (name => {
+            console.log("File added: %s", name);
+
+            constantFile(v + "/" + name).then(v => {
+                console.log("File moved: %s", name);
+                const child = spawn(join(__dirname, "../../.conda/python.exe"), [compare, v, JSON.stringify(folders)]);
+
+                child.stdout.on("data", (data) => {
+                    console.log(`stdout: ${data}`);
+                    const str = data.toString().trim();
+
+                    moveFile(v, str);
+                });
+
+                child.stderr.on("data", (data) => {
+                    console.error(`stderr: ${data}`);
+                });
+            });
+        })));
+    });
 
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the

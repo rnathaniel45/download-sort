@@ -1,12 +1,40 @@
 import Store from "electron-store";
+import { access } from "node:fs/promises";
+import { is } from "@electron-toolkit/utils";
+import { resolve } from "node:path";
 
-const store = new Store();
-store.set("folders",[])
+interface GlobalConfig {
+    folders: {path: string, desc: string}[]
+};
 
-function addFolder(topic:string){
-    const folders = store.get("folders") as string[];
-    if(!folders.includes(topic)){
-        folders.push(topic);
+const store = new Store.default<GlobalConfig>({
+    defaults: {
+        folders: []
+    }
+});
+
+const folders: GlobalConfig["folders"] = store.get("folders");
+
+for (let i = 0; i < folders.length; ++i) {
+    if (is.dev) {
+        access(folders[i].path).catch(() => { folders.splice(i, 1); });
     }
 }
-export default store;
+
+function addFolder(path: string, desc: string): void {
+    if (!folders.find(folder => resolve(folder.path) === resolve(path))) {
+        folders.push({path, desc});
+        store.set("folders", folders);
+    }
+}
+
+function removeFolder(path: string): void {
+    const indice = folders.findIndex(folder => resolve(folder.path) === resolve(path));
+
+    if (indice !== - 1) {
+        folders.splice(indice, 1);
+        store.set("folders", folders);
+    }
+}
+
+export { folders as default, addFolder, removeFolder };
