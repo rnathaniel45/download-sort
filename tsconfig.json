@@ -5,5 +5,12 @@
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
         "allowJs": true
-	}
+	},
+	"compilerOptions": {
+    "module": "ESNext"
+  },
+  "ts-node": {
+        // Tell ts-node CLI to install the --loader automatically
+        "esm": true
+    }
 }

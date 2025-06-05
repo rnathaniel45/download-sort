@@ -1,6 +1,7 @@
 import { dialog } from "electron";
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import chokidar from "chokidar";
 async function addFile(): Promise<string> {
     const filePath = (
         await dialog.showOpenDialog({
@@ -30,11 +31,12 @@ async function watchFolder(filePath: string, callback: watchCallback): Promise<w
 
         (async () => {
             for await (const event of watcher) {
-                if (event.eventType === "rename" && event.filename) {
+                if (event.eventType === "change" && event.filename) {
                     const fullPath = path.join(filePath, event.filename);
 
                     try {
                         await fs.access(fullPath);
+                        await constantFile(fullPath);
                         callback(event.filename);
                     } catch { ; }
                 }

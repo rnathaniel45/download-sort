@@ -67,7 +67,7 @@ app.whenReady().then(() => {
 
             constantFile(v + "/" + name).then(v => {
                 console.log("File moved: %s", name);
-                const child = spawn(join(__dirname, "../../.conda/python.exe"), [compare, v, JSON.stringify(folders)]);
+                const child = spawn( "/Users/colinxu2006/.pyenv/shims/python3", [compare, v, JSON.stringify(folders)]);
 
                 child.stdout.on("data", (data) => {
                     console.log(`stdout: ${data}`);
