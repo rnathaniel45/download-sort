@@ -6,9 +6,8 @@ import compare from "./compare.py?asset";
 import { addFile, watchFolder } from "./fileHandler";
 import { moveFile } from "./movefile";
 import { constantFile } from "./fileHandler";
-import folders, { addFolder, removeFolder } from "./store";
+import folders, { addFolder, addMonitor, changedesc, monitor, removeFolder } from "./store";
 import { spawn } from "child_process";
-
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -18,8 +17,10 @@ function createWindow(): void {
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),
         webPreferences: {
-            preload: join(__dirname, "../preload/index.js"),
-            sandbox: false
+            preload: join(__dirname, "../preload/index.mjs"),
+            sandbox: false,
+            contextIsolation: true,
+            nodeIntegration: true
         }
     });
 
@@ -41,6 +42,27 @@ function createWindow(): void {
     }
 }
 
+function activateMonitor(): void {
+    watchFolder(monitor, (name => {
+        console.log("File added: %s", name);           
+        console.log("Folders:", folders);
+        constantFile(monitor + "/" + name).then(v => {
+            console.log("File moved: %s", name);
+            const child = spawn( "/Users/colinxu2006/.pyenv/shims/python3", [compare, v, JSON.stringify(folders)]);
+
+            child.stdout.on("data", (data) => {
+                console.log(`stdout: ${data}`);
+                const str = data.toString().trim();
+
+                moveFile(v, str);
+            });
+
+            child.stderr.on("data", (data) => {
+                console.error(`stderr: ${data}`);
+            });
+        });
+    }))
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -58,30 +80,22 @@ app.whenReady().then(() => {
     // IPC test
     ipcMain.on("ping", () => console.log("pong"));
     createWindow();
-
-    addFile().then(v => addFolder(v, basename(v))).then(() => {
-        console.log("Folders:", folders);
-
-        addFile().then(v => watchFolder(v, (name => {
-            console.log("File added: %s", name);
-
-            constantFile(v + "/" + name).then(v => {
-                console.log("File moved: %s", name);
-                const child = spawn( "/Users/colinxu2006/.pyenv/shims/python3", [compare, v, JSON.stringify(folders)]);
-
-                child.stdout.on("data", (data) => {
-                    console.log(`stdout: ${data}`);
-                    const str = data.toString().trim();
-
-                    moveFile(v, str);
-                });
-
-                child.stderr.on("data", (data) => {
-                    console.error(`stderr: ${data}`);
-                });
-            });
-        })));
+    ipcMain.on("addFolder", () => {
+        addFile().then(v => addFolder(v, basename(v))).catch(e => {
+            console.error(e);
+        });
     });
+    ipcMain.on("removeFolder", () => {
+        addFile().then(v => removeFolder(v)).catch(e => {
+            console.error(e);
+        });
+    });
+    ipcMain.on("addMonitor", () => {
+        addFile().then(v => addMonitor(v)).catch(e => {
+            console.error(e);
+        });
+    });
+    activateMonitor();
 
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the

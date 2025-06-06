@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Versions(): React.JSX.Element {
-    const [versions] = useState(window.electron.process.versions);
+    const [versions, setVersions] = useState({
+        electron: '',
+        chrome: '',
+        node: ''
+    });
+
+    useEffect(() => {
+        // Safely access versions
+        if (window.electron?.process?.versions) {
+            setVersions(window.electron.process.versions);
+        }
+    }, []);
 
     return (
         <ul className="versions">

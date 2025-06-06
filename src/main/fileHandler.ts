@@ -1,7 +1,8 @@
 import { dialog } from "electron";
-import * as fs from "node:fs/promises";
-import path from "node:path";
-import chokidar from "chokidar";
+import { FSWatcher,watch} from 'fs';
+import { stat } from 'fs/promises';
+let watcher: FSWatcher | null = null;
+
 async function addFile(): Promise<string> {
     const filePath = (
         await dialog.showOpenDialog({
@@ -20,34 +21,27 @@ interface watchResponse {
     readonly success: boolean,
     readonly abort?: AbortController
 };
-
+function stopWatch(): void {
+    if (watcher) {
+        watcher.close();
+        watcher = null;
+    }
+}
 type watchCallback = (fileName: string) => void;
 
 async function watchFolder(filePath: string, callback: watchCallback): Promise<watchResponse> {
-    const abort = new AbortController();
-
+    stopWatch();
     try {
-        const watcher = fs.watch(filePath, { signal: abort.signal });
-
-        (async () => {
-            for await (const event of watcher) {
-                if (event.eventType === "change" && event.filename) {
-                    const fullPath = path.join(filePath, event.filename);
-
-                    try {
-                        await fs.access(fullPath);
-                        await constantFile(fullPath);
-                        callback(event.filename);
-                    } catch { ; }
-                }
+        watcher = watch(filePath, (eventType, filename) => {
+            if (eventType === "change"  && filename) {
+                callback(filename);
             }
-        })().catch(error => console.error(`Aborting watch (${filePath}): ${(error as Error).message}`)); //CHANGE TO IPC
+        });
     } catch (error) {
-        console.error(`Failed to init watch (${filePath}): ${(error as Error).message}`);
-        return { success: false };
+        throw new Error(`Failed to init watch (${filePath}): ${(error as Error).message}`);
     }
 
-    return { success: true, abort };
+    return { success: true };
 }
 
 async function constantFile(fileName: string, interval: number = 500, maxTries: number = 10): Promise<string> {
@@ -55,14 +49,14 @@ async function constantFile(fileName: string, interval: number = 500, maxTries: 
 
     for (let i = 0; i < maxTries; i++) {
         try {
-            const stat = await fs.stat(fileName);
+            const Filestat = await stat(fileName);
 
-            if (stat.size === recentsize) {
+            if (Filestat.size === recentsize) {
                 console.log("File is constant");
                 return fileName;
             }
 
-            recentsize = stat.size;
+            recentsize = Filestat.size;
         } catch (error) {
             console.error(`Failed to get size of ${fileName}: ${(error as Error).message}`);
         }
