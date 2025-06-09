@@ -1,6 +1,7 @@
 import { access } from "node:fs/promises";
 import { is } from "@electron-toolkit/utils";
 import { resolve } from "node:path";
+import { watchFolder } from "./fileHandler";
 const Store = require("electron-store").default;
 interface GlobalConfig {
     folders: {path: string, desc: string}[]
@@ -19,7 +20,12 @@ const monitor: GlobalConfig["monitor"] = store.get("monitor");
 for (let i = 0; i < folders.length; ++i) {
     access(folders[i].path).catch(() => { folders.splice(i, 1); });
 }
-
+function getMonitor(): string {
+    return store.get("monitor");
+}
+function getFolders(): GlobalConfig["folders"] {
+    return store.get("folders");
+}
 function addMonitor(path: string): void {
     store.set("monitor", path);
 }
@@ -45,4 +51,4 @@ function removeFolder(path: string): void {
         store.set("folders", folders);
     }
 }
-export { folders as default, addFolder, removeFolder, changedesc, addMonitor, monitor};
+export { folders as default, addFolder, removeFolder, changedesc, addMonitor, monitor, getMonitor, getFolders};

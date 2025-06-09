@@ -1,6 +1,7 @@
+import chokidar, { FSWatcher } from "chokidar";
 import { dialog } from "electron";
-import { FSWatcher,watch} from 'fs';
 import { stat } from 'fs/promises';
+import path from "path";
 let watcher: FSWatcher | null = null;
 
 async function addFile(): Promise<string> {
@@ -29,19 +30,26 @@ function stopWatch(): void {
 }
 type watchCallback = (fileName: string) => void;
 
-async function watchFolder(filePath: string, callback: watchCallback): Promise<watchResponse> {
+function watchFolder(filePath: string, callback: watchCallback): void {
     stopWatch();
-    try {
-        watcher = watch(filePath, (eventType, filename) => {
-            if (eventType === "change"  && filename) {
-                callback(filename);
+    watcher = chokidar.watch(filePath, {
+        ignoreInitial: true,
+        awaitWriteFinish: {
+            stabilityThreshold: 2000,
+            pollInterval: 100
+        }
+    });
+    watcher.on('add', async (fullPath) => {
+        try {
+            await constantFile(fullPath);
+            callback(path.basename(fullPath));
+        } catch (error) {
+            console.error(`Error processing file ${fullPath}: ${(error as Error).message}`);
             }
         });
-    } catch (error) {
-        throw new Error(`Failed to init watch (${filePath}): ${(error as Error).message}`);
-    }
-
-    return { success: true };
+    watcher.on('error', (error) => {
+        console.error(`Error watching ${filePath}: ${(error as Error).message}`);
+    });
 }
 
 async function constantFile(fileName: string, interval: number = 500, maxTries: number = 10): Promise<string> {
