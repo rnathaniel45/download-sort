@@ -95,12 +95,14 @@ app.whenReady().then(() => {
             return false;                      // send failure back
           }
     });
-    ipcMain.on("removeFolder", () => {
-        addFile().then(v => {
-            removeFolder(v);
-        }).catch(e => {
+    ipcMain.handle("removeFolder", async (event, v: string) => {
+        try {
+            await removeFolder(v);  // wait for addFolder to finish
+            return true;                       // send success back
+          } catch (e) {
             console.error(e);
-        });
+            return false;                      // send failure back
+        }
     });
     ipcMain.on("addMonitor", () => {
         addFile() .then(v => {
