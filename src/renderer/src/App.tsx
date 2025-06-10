@@ -2,6 +2,7 @@ import Versions from "./components/Versions";
 import electronLogo from "./assets/electron.svg";
 import React, { useEffect, useState } from "react";
 import folderpic from "./public/folder.png"
+import Popup from "./popup";
 function App(): React.JSX.Element {
     async function fetchFolders() {
         try {
@@ -20,9 +21,10 @@ function App(): React.JSX.Element {
         const folders = await window.electron.ipcRenderer.invoke("getFolders");
         console.log(folders);
     };
-    
+    const [showPopup, setShowPopup] = useState(false);
+    const changeDesc = async (v: string, a: string): Promise<void> => window.electron.ipcRenderer.invoke("changeDesc", v, a).then(() => fetchFolders());
     const [folders, setFolders] = useState([]);
-  
+    
     useEffect(() => {
       fetchFolders();
     }, []);
@@ -53,14 +55,17 @@ function App(): React.JSX.Element {
           >
             <img src = {folderpic} alt="folder" style = {{width: "100px", height: "auto"}} />
             <span style = {{fontSize: "12px"}}>{folder.path}</span>
-            <button onClick={() => removeFolder(folder.path)}>Remove</button>
+            <span style = {{display: "flex", flexDirection: "row", gap: "8px"}}>    
+                <button onClick={() => removeFolder(folder.path)}>Remove</button>
+                <Popup folder={folder.path} changeDesc={changeDesc} desc = {folder.desc}/>
+            </span>
           </div>
         ))
       )}
     </div>
-        <div style = {{display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "16px", alignItems:"center", justifyContent:"center", verticalAlign: "top", position: "relative", top: "0", left: "0", right: "0", bottom: "0"}}>
-            <button onClick={addFolder}>Add Folder</button>
-            <button onClick={addMonitor}>Add Monitor</button>
+        <div style = {{display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "16px", alignItems:"center", justifyContent:"flex-end", position: "fixed", height: "180vh", right: "10vw"}}>
+            <button style = {{width: "100px", height: "30px", borderRadius: "5px", border: "1px solid #ccc", padding: "5px", boxSizing: "border-box"}} onClick={addFolder}>Add Folder</button>
+            <button style = {{width: "100px", height: "30px", borderRadius: "5px", border: "1px solid #ccc", padding: "5px", boxSizing: "border-box"}} onClick={addMonitor}>Add Monitor</button>
         </div>
            
             <Versions></Versions> 

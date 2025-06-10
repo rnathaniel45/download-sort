@@ -111,6 +111,15 @@ app.whenReady().then(() => {
         })
         .catch(console.error);
     });
+    ipcMain.handle("changeDesc", async (event, v: string, a: string) => {
+        try{
+            await changedesc(v, a);
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    });
     ipcMain.handle("getFolders", () => {
         return getFolders();
     });
