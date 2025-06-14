@@ -37,7 +37,8 @@ function watchFolder(filePath: string, callback: watchCallback): void {
         awaitWriteFinish: {
             stabilityThreshold: 2000,
             pollInterval: 100
-        }
+        },
+        depth: 0
     });
     watcher.on('add', async (fullPath) => {
         try {
@@ -75,4 +76,4 @@ async function constantFile(fileName: string, interval: number = 500, maxTries: 
     throw new Error(`Failed to get size of ${fileName}: retries (${maxTries}) exhausted`);
 }
 
-export { addFile, watchFolder, constantFile };
+export { addFile, watchFolder, constantFile, stopWatch};

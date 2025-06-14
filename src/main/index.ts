@@ -6,9 +6,9 @@ import compare from "./compare.py?asset";
 import { addFile, watchFolder } from "./fileHandler";
 import { moveFile } from "./movefile";
 import { constantFile } from "./fileHandler";
-import folders, { addFolder, addMonitor, changedesc, getFolders, getMonitor, monitor, removeFolder } from "./store";
+import folders, { addFolder, addMonitor, changedesc, getFolders, getMonitor, monitor, removeFolder, removeMonitor } from "./store";
 import { spawn } from "child_process";
-
+import { stopWatch } from "./fileHandler";
 let mainWindow: BrowserWindow;
 
 function createWindow(): void {
@@ -104,12 +104,16 @@ app.whenReady().then(() => {
             return false;                      // send failure back
         }
     });
-    ipcMain.on("addMonitor", () => {
-        addFile() .then(v => {
-            addMonitor(v); 
+    ipcMain.handle("addMonitor", async () => {
+        try {
+            const v = await addFile();          // wait for addFile to finish
+            await addMonitor(v); 
             activateMonitor();
-        })
-        .catch(console.error);
+            return v;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
     });
     ipcMain.handle("changeDesc", async (event, v: string, a: string) => {
         try{
@@ -120,8 +124,15 @@ app.whenReady().then(() => {
             return false;
         }
     });
+    ipcMain.handle("getMonitor", () => {
+        return getMonitor();
+    });
     ipcMain.handle("getFolders", () => {
         return getFolders();
+    });
+    ipcMain.handle("removeMonitor", () => {
+        stopWatch();
+        removeMonitor();
     });
     activateMonitor();
     app.on("activate", function () {

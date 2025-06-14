@@ -3,7 +3,7 @@ function Popup({folder, changeDesc, desc}: {folder: string, desc: string, change
   const [showPopup, setShowPopup] = useState(false);
   return (
     <div>
-      <button onClick={() => setShowPopup(true)}>Description</button>
+      <button onClick={() => setShowPopup(true)} style = {{height: "25px", width: "100px", borderRadius: "5px", border: "1px solid #ccc", padding: "5px", boxSizing: "border-box"}}>Description</button>
 
       {showPopup && (
         <div

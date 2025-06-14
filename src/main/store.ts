@@ -29,6 +29,9 @@ function getFolders(): GlobalConfig["folders"] {
 function addMonitor(path: string): void {
     store.set("monitor", path);
 }
+function removeMonitor(): void {
+    store.set("monitor", "");
+}
 function addFolder(path: string, desc: string): void {
     if (!folders.find(folder => resolve(folder.path) === resolve(path))) {
         folders.push({path, desc});
@@ -51,4 +54,4 @@ function removeFolder(path: string): void {
         store.set("folders", folders);
     }
 }
-export { folders as default, addFolder, removeFolder, changedesc, addMonitor, monitor, getMonitor, getFolders};
+export { folders as default, addFolder, removeFolder, changedesc, addMonitor, monitor, getMonitor, getFolders, removeMonitor};
