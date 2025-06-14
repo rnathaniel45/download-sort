@@ -76,6 +76,9 @@ function App(): React.JSX.Element {
         ))
       )}
     </div>
+    <p style={{fontSize: "12px",  position: "absolute",
+    bottom: "0",
+    right: "0", marginBottom: "70px"}}>Only monitoring files with the following formats: .jpg, .png, .pdf, .docx, .pptx, .webm</p>
         <div style={{
     position: "absolute",
     bottom: "0",
